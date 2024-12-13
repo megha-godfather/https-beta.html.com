@@ -1,0 +1,2195 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<title>HealthSky - Disease Checker</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        padding-top: 80px;
+        background: linear-gradient(135deg, #ffecd2, #fcb69f);
+        min-height: 100vh;
+        transition: background 0.5s ease;
+    }
+
+    .navbar {
+        background: #ff6f61;
+        padding: 15px 0;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        animation: slideDown 1s ease;
+    }
+
+    @keyframes slideDown {
+        from { top: -60px; }
+        to { top: 0; }
+    }
+
+    .nav-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+    }
+
+    .nav-logo {
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: bold;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .nav-logo:hover {
+        color: #ffe6e6;
+    }
+
+    .nav-menu {
+        list-style: none;
+        display: flex;
+        margin: 0;
+        padding: 0;
+    }
+
+    .nav-item {
+        margin: 0 15px;
+    }
+
+    .nav-link {
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 18px;
+        padding: 5px 15px;
+        border-radius: 20px;
+        transition: background 0.3s, color 0.3s;
+        position: relative;
+    }
+
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        width: 0%;
+        height: 2px;
+        background: #ffffff;
+        left: 0;
+        bottom: -5px;
+        transition: width 0.3s;
+    }
+
+    .nav-link:hover::after {
+        width: 100%;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-link.active {
+        background: rgba(255, 255, 255, 0.4);
+        color: #ff6f61;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        transition: background 0.5s ease, box-shadow 0.5s ease;
+    }
+
+    h1 {
+        color: #ff6f61;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 3em;
+        text-shadow: 2px 2px #ffe6e6;
+    }
+
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
+
+    .loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .loading-spinner {
+        width: 100px;
+        height: 100px;
+        border: 8px solid #ffe6e6;
+        border-radius: 50%;
+        border-top: 8px solid #ff6f61;
+        animation: spin 1s linear infinite;
+        box-shadow: 0 0 10px rgba(255,111,97,0.5);
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .disease-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .disease-item {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 20px;
+        padding: 20px;
+        margin: 15px 0;
+        background: #fff0f6;
+        border-radius: 15px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .disease-item:hover {
+        transform: translateX(10px);
+        background: #ffe6ec;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+    }
+
+    .disease-title {
+        font-size: 1.4em;
+        color: #ff6f61;
+        margin: 0;
+        text-shadow: 1px 1px #ffe6e6;
+    }
+
+    .disease-brief {
+        color: #5c5454;
+        font-size: 1em;
+        line-height: 1.8;
+        margin: 10px 0 0 0;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.6);
+        z-index: 1001;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        background: #ffffff;
+        width: 80%;
+        max-width: 700px;
+        margin: 50px auto;
+        padding: 30px;
+        border-radius: 20px;
+        position: relative;
+        animation: slideIn 0.5s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .close {
+        position: absolute;
+        right: 25px;
+        top: 15px;
+        font-size: 28px;
+        font-weight: bold;
+        color: #ff6f61;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+    .close:hover {
+        color: #ff1e00;
+    }
+
+    .btn {
+        padding: 12px 25px;
+        margin: 10px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 16px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .btn-yes {
+        background: #4caf50;
+        color: white;
+    }
+
+    .btn-yes:hover {
+        background: #45a049;
+    }
+
+    .btn-no {
+        background: #f44336;
+        color: white;
+    }
+
+    .btn-no:hover {
+        background: #da190b;
+    }
+
+    .question {
+        margin: 20px 0;
+        font-size: 1.2em;
+        color: #333;
+    }
+
+    .result {
+        padding: 25px;
+        margin-top: 25px;
+        border-radius: 10px;
+        background: #e6f7ff;
+        display: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .disease-info {
+        padding: 25px;
+        margin: 25px 0;
+        background: #f0fff4;
+        border-radius: 12px;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .disease-info h3 {
+        color: #4caf50;
+        margin-bottom: 20px;
+    }
+
+    .disease-info p {
+        line-height: 1.8;
+        margin-bottom: 20px;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        margin: 25px 0;
+    }
+
+    .stat-box {
+        background: #fff3e0;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease, background 0.3s ease;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-5px);
+        background: #ffe0b2;
+    }
+
+    .stat-box h4 {
+        color: #ff6f61;
+        margin: 0 0 15px 0;
+        font-size: 1em;
+    }
+
+    .stat-box p {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: #333;
+        margin: 0;
+    }
+
+    .stat-box::before {
+        content: '';
+        display: block;
+        width: 50px;
+        height: 5px;
+        background: #ff6f61;
+        margin: 0 auto 15px;
+        border-radius: 2px;
+    }
+
+    .icon-container {
+        width: 100%;
+        max-width: 200px;
+        margin: 25px auto;
+    }
+
+    .proceed-btn {
+        background: #ff6f61;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        display: block;
+        margin: 25px auto;
+        transition: background 0.3s;
+        font-size: 16px;
+    }
+
+    .proceed-btn:hover {
+        background: #e65c50;
+    }
+
+    .section-title {
+        color: #ff6f61;
+        font-size: 2.5em;
+        margin-bottom: 30px;
+        text-align: center;
+        position: relative;
+        padding-bottom: 20px;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 120px;
+        height: 4px;
+        background: #ff6f61;
+        border-radius: 2px;
+    }
+
+    .coming-soon {
+        text-align: center;
+        padding: 120px 20px;
+        background: #fff0f6;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        margin: 25px auto;
+        max-width: 1000px;
+        transition: background 0.5s ease, box-shadow 0.5s ease;
+    }
+
+    .coming-soon h2 {
+        color: #ff6f61;
+        font-size: 3em;
+        margin-bottom: 25px;
+    }
+
+    .coming-soon p {
+        color: #5c5454;
+        font-size: 1.3em;
+    }
+
+    .section {
+        display: none;
+        padding-top: 80px;
+        animation: fadeInSection 1s ease;
+    }
+
+    @keyframes fadeInSection {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .section.active {
+        display: block;
+    }
+
+    .disease-search {
+        width: 100%;
+        padding: 15px;
+        font-size: 18px;
+        border: 2px solid #ff6f61;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        transition: border-color 0.3s ease;
+    }
+
+    .disease-search:focus {
+        border-color: #ff1e00;
+        outline: none;
+    }
+
+    .search-btn, .browse-btn {
+        background: #ff6f61;
+        color: white;
+        padding: 14px 35px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-right: 15px;
+    }
+
+    .search-btn:hover, .browse-btn:hover {
+        background: #e65c50;
+    }
+
+    .disease-browse-list {
+        margin-top: 25px;
+        max-height: 500px;
+        overflow-y: auto;
+        border: 2px solid #ffe6ec;
+        border-radius: 12px;
+        padding: 25px;
+        background: #fff0f6;
+        transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .disease-info-display {
+        margin-top: 35px;
+        padding: 25px;
+        background: #eef9ff;
+        border-radius: 12px;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .manual-browse {
+        margin: 25px 0;
+        text-align: center;
+    }
+
+    .disease-item-browse {
+        padding: 12px;
+        margin: 8px 0;
+        cursor: pointer;
+        border-bottom: 2px solid #ffe6ec;
+        transition: background 0.3s, color 0.3s;
+        border-radius: 8px;
+    }
+
+    .disease-item-browse:hover {
+        background: #ffe6ec;
+        color: #ff1e00;
+    }
+
+    .disease-full-description {
+        padding: 25px;
+        line-height: 1.8;
+        background: #f0f0f0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .symptoms-section {
+        background: #fff3e0;
+        padding: 25px;
+        border-radius: 12px;
+        margin: 25px 0;
+    }
+
+    .symptoms-section ul {
+        padding-left: 25px;
+    }
+
+    .symptoms-section li {
+        margin: 12px 0;
+        position: relative;
+        padding-left: 20px;
+        color: #333;
+    }
+
+    .symptoms-section li::before {
+        content: '✔';
+        position: absolute;
+        left: 0;
+        color: #4caf50;
+    }
+
+    .infographic-container {
+        background: rgba(255,255,255,0.25);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+    }
+
+    .infographic-visual {
+        font-family: 'Courier New', Courier, monospace;
+        white-space: pre-wrap;
+        overflow-x: auto;
+        background: rgba(0,0,0,0.05);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+
+    .infographic-points {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .infographic-points li {
+        margin: 10px 0;
+        padding-left: 25px;
+        position: relative;
+        color: #333;
+    }
+
+    .infographic-points li:before {
+        content: '➤';
+        position: absolute;
+        left: 0;
+        color: #ff6f61;
+    }
+
+    .tooltip {
+        font-size: 14px;
+        pointer-events: none;
+    }
+
+    /* Remove these styles */
+    .world-map-container,
+    .map-controls,
+    .map-legend,
+    .chatbot-container,
+    .chat-messages,
+    .typing-indicator,
+    .chat-input,
+    .message,
+    .tooltip,
+    .country-data-modal {
+        display: none;
+    }
+
+    /* Update home section styles */
+    #home {
+        text-align: center;
+        background: transparent;
+        padding: 60px 20px;
+    }
+
+    #home .container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    #india-map-container {
+        display: none;
+    }
+
+    /* Additional styles for the games */
+    #games .game-buttons .btn {
+        background: #4caf50;
+        color: white;
+        padding: 14px 35px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: background 0.3s;
+        font-size: 16px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin: 10px;
+    }
+
+    #games .game-buttons .btn:hover {
+        background: #3e8e41;
+    }
+
+    .game-container {
+        display: none;
+    }
+
+    #game1, #game2 {
+        position: relative;
+        margin-top: 40px;
+        padding: 25px;
+        background: #fff0f6;
+        border-radius: 20px;
+        box-shadow: 0 0 30px rgba(0,0,0,0.1);
+        transition: background 0.5s ease, box-shadow 0.5s ease;
+    }
+
+    #game1 .game-title, #game2 .game-title {
+        color: #ff6f61;
+        text-align: center;
+        margin-bottom: 25px;
+        font-size: 2.5em;
+        text-shadow: 1px 1px #ffe6e6;
+    }
+
+    #game1 .game-status, #game2 .game-status {
+        text-align: center;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    #gameCanvasZ {
+        display: block;
+        margin: 0 auto;
+        background-color: #e0f7fa;
+        border: 3px solid #4caf50;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    #gameTextZ, #gameText {
+        text-align: center;
+        margin-top: 15px;
+        white-space: pre-line;
+        color: #333;
+        font-size: 1.2em;
+    }
+
+    /* Styles for second game questions and pause */
+    #game2 .question-display {
+        display: none;
+        background: rgba(0, 0, 0, 0.75);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        position: absolute;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1002;
+        width: 85%;
+        text-align: center;
+        animation: fadeInModal 0.3s ease;
+    }
+
+    #game2 .paused-display {
+        display: none;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        position: absolute;
+        top: 40%;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1002;
+        width: 60%;
+        text-align: center;
+        font-size: 2em;
+        animation: fadeInModal 0.3s ease;
+    }
+
+    @keyframes fadeInModal {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .health-bar {
+        width: 100%;
+        background-color: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        margin: 10px 0;
+    }
+
+    .health-fill {
+        height: 25px;
+        background-color: #4caf50;
+        width: 100%;
+        transition: width 0.3s, background-color 0.3s;
+    }
+
+    .health-fill.low {
+        background-color: #f44336;
+    }
+
+    /* Diet Checker Styles */
+    #diet-checker .form-group {
+        margin-bottom: 25px;
+    }
+
+    #diet-checker label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #ff6f61;
+        font-size: 1.1em;
+    }
+
+    #diet-checker input, #diet-checker select {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        border: 2px solid #ff6f61;
+        border-radius: 12px;
+        transition: border-color 0.3s ease;
+    }
+
+    #diet-checker input:focus, #diet-checker select:focus {
+        border-color: #ff1e00;
+        outline: none;
+    }
+
+    #diet-checker .btn-submit {
+        background: #ff6f61;
+        color: white;
+        padding: 14px 30px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background 0.3s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-top: 10px;
+    }
+
+    #diet-checker .btn-submit:hover {
+        background: #e65c50;
+    }
+
+    #bmi-result, #diet-suggestion {
+        margin-top: 25px;
+        padding: 25px;
+        background: #eef9ff;
+        border-radius: 15px;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    footer {
+        text-align: center;
+        padding: 25px;
+        background: #ff6f61;
+        color: white;
+        font-size: 1em;
+        position: relative;
+        bottom: 0;
+        width: 100%;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    }
+</style>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://d3js.org/topojson.v3.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="https://healthsky.com" class="nav-logo">HealthSky</a>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="https://example.com/home" class="nav-link" data-section="home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://example.com/diagnosis" class="nav-link active" data-section="diagnosis">Diagnosis</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://example.com/factpedia" class="nav-link" data-section="factpedia">Factpedia</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://example.com/games" class="nav-link" data-section="games">Games</a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://example.com/diet-checker" class="nav-link" data-section="diet-checker">Diet Checker</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="loading">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <div id="home" class="section">
+        <div class="container">
+            <h1 class="section-title">Welcome to HealthSky</h1>
+            <p style="text-align: center; font-size: 1.3em; line-height: 1.8; color: #333; margin: 40px 0;">
+                HEALTHSKY IS OUR INITIATIVE TO GIVE PEOPLE A QUICK ACCESS PORTAL TO IMPORTANT HEALTH INFORMATION, IN JUST ONE COLORFUL WEBSITE.
+            </p>
+        </div>
+    </div>
+
+    <div id="diagnosis" class="section active">
+        <div class="container">
+            <h1 class="section-title">DIAGNOSIS</h1>
+            <ul class="disease-list">
+                <li class="disease-item" data-disease="covid19">
+                    <div class="disease-title">COVID-19</div>
+                    <div class="disease-brief">
+                        A highly contagious respiratory illness caused by the SARS-CoV-2 virus. Common symptoms include fever, cough, and fatigue. The virus spreads primarily through respiratory droplets when infected people talk, cough, or sneeze. Prevention includes vaccination, masks, and social distancing. Global impact has led to significant changes in healthcare and daily life.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="diabetes">
+                    <div class="disease-title">Diabetes</div>
+                    <div class="disease-brief">
+                        A chronic metabolic disorder characterized by elevated blood glucose levels due to either insufficient insulin production (Type 1) or the body's ineffective use of insulin (Type 2). The condition affects millions globally and its prevalence continues to rise, particularly in developing nations.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="hypertension">
+                    <div class="disease-title">Hypertension</div>
+                    <div class="disease-brief">
+                        A condition in which the force of the blood against the artery walls is too high. Often referred to as high blood pressure, it can lead to serious health issues such as heart disease and stroke. Common symptoms may include headaches, shortness of breath, and nosebleeds. Regular monitoring and lifestyle changes are key to management.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="asthma">
+                    <div class="disease-title">Asthma</div>
+                    <div class="disease-brief">
+                        A chronic condition that affects the airways in the lungs, leading to difficulty breathing. Symptoms can include wheezing, coughing, chest tightness, and shortness of breath. Asthma can be triggered by allergens, exercise, and respiratory infections. Management includes avoiding triggers and using inhalers.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="arthritis">
+                    <div class="disease-title">Arthritis</div>
+                    <div class="disease-brief">
+                        A complex family of musculoskeletal disorders consisting of more than 100 different conditions that affect people of all ages, races, and genders. The two most common forms are osteoarthritis and rheumatoid arthritis, each with distinct causes and treatments.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="depression">
+                    <div class="disease-title">Depression</div>
+                    <div class="disease-brief">
+                        A mood disorder that causes a persistent feeling of sadness and loss of interest. Depression can affect how you feel, think, and handle daily activities. Symptoms may include changes in appetite, sleep disturbances, and feelings of worthlessness. Treatment often includes therapy and medication.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="anxiety">
+                    <div class="disease-title">Anxiety</div>
+                    <div class="disease-brief">
+                        A mental health disorder characterized by feelings of worry, anxiety, or fear that are strong enough to interfere with daily activities. Symptoms can include restlessness, fatigue, and difficulty concentrating. Treatment options include therapy, medication, and lifestyle changes.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="migraine">
+                    <div class="disease-title">Migraine</div>
+                    <div class="disease-brief">
+                        A type of headache characterized by severe pain, often accompanied by nausea, vomiting, and sensitivity to light and sound. Migraines can last from hours to days and can be debilitating. Management includes medication and lifestyle adjustments to avoid triggers.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="thyroid">
+                    <div class="disease-title">Thyroid Disorders</div>
+                    <div class="disease-brief">
+                        Conditions that affect the thyroid gland, leading to an imbalance of hormones. Symptoms can include weight changes, fatigue, and mood swings. Common disorders are hypothyroidism and hyperthyroidism. Treatment varies depending on the specific disorder and can include medication or surgery.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="ibs">
+                    <div class="disease-title">Irritable Bowel Syndrome (IBS)</div>
+                    <div class="disease-brief">
+                        A common disorder affecting the large intestine, characterized by symptoms such as cramping, abdominal pain, bloating, gas, and diarrhea or constipation. The exact cause is unknown, but management includes dietary changes and stress management techniques.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="multiple-sclerosis">
+                    <div class="disease-title">Multiple Sclerosis</div>
+                    <div class="disease-brief">
+                        A complex autoimmune disease that affects the central nervous system (brain and spinal cord) by damaging the protective covering of nerve fibers (myelin sheath). This damage disrupts communication between the brain and the rest of the body, leading to a wide range of physical and cognitive symptoms.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="parkinsons-disease">
+                    <div class="disease-title">Parkinson's Disease</div>
+                    <div class="disease-brief">
+                        A progressive nervous system disorder affecting movement, characterized by tremors, stiffness, and difficulty with walking, balance, and coordination. The condition develops when nerve cells in the brain that produce dopamine become impaired or die, leading to various motor and non-motor symptoms.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="lupus">
+                    <div class="disease-title">Lupus</div>
+                    <div class="disease-brief">
+                        A chronic autoimmune disease where the body's immune system becomes hyperactive and attacks normal, healthy tissue, causing inflammation and damage to various body systems including joints, skin, kidneys, blood cells, brain, heart, and lungs.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="celiac-disease">
+                    <div class="disease-title">Celiac Disease</div>
+                    <div class="disease-brief">
+                        An autoimmune disorder where the ingestion of gluten leads to damage in the small intestine. When people with celiac disease eat gluten (a protein found in wheat, rye, and barley), their body mounts an immune response that attacks the small intestine, damaging the villi that promote nutrient absorption.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="crohns-disease">
+                    <div class="disease-title">Crohn's Disease</div>
+                    <div class="disease-brief">
+                        A type of inflammatory bowel disease (IBD) that causes inflammation of the digestive tract, which can lead to abdominal pain, severe diarrhea, fatigue, weight loss, and malnutrition.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="fibromyalgia">
+                    <div class="disease-title">Fibromyalgia</div>
+                    <div class="disease-brief">
+                        A chronic condition characterized by widespread musculoskeletal pain accompanied by fatigue, sleep, memory, and mood issues.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="endometriosis">
+                    <div class="disease-title">Endometriosis</div>
+                    <div class="disease-brief">
+                        A painful disorder where tissue similar to the tissue that normally lines the inside of the uterus grows outside the uterus, causing severe pain and fertility problems.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="copd">
+                    <div class="disease-title">Chronic Obstructive Pulmonary Disease (COPD)</div>
+                    <div class="disease-brief">
+                        A progressive inflammatory lung disease that causes obstructed airflow from the lungs, typically caused by long-term exposure to irritating gases or particulate matter.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="sleep-apnea">
+                    <div class="disease-title">Sleep Apnea</div>
+                    <div class="disease-brief">
+                        A potentially serious sleep disorder where breathing repeatedly stops and starts during sleep, significantly impacting quality of life.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="psoriasis">
+                    <div class="disease-title">Psoriasis</div>
+                    <div class="disease-brief">
+                        A chronic autoimmune condition causing rapid buildup of skin cells, resulting in scaling on the skin's surface. Inflammation and redness around the scales is fairly common, and the scales typically develop into thick, red patches that can crack and bleed.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="epilepsy">
+                    <div class="disease-title">Epilepsy</div>
+                    <div class="disease-brief">
+                        A central nervous system disorder causing abnormal brain activity leading to seizures or periods of unusual behavior, sensations, and sometimes loss of awareness.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="chronic-fatigue-syndrome">
+                    <div class="disease-title">Chronic Fatigue Syndrome</div>
+                    <div class="disease-brief">
+                        A complex disorder characterized by extreme fatigue that can't be explained by any underlying medical condition, with symptoms that may worsen with physical or mental activity.
+                    </div>
+                </li>
+                <li class="disease-item" data-disease="wilsons-disease">
+                    <div class="disease-title">Wilson's Disease</div>
+                    <div class="disease-brief">
+                        A rare inherited disorder causing excessive copper accumulation in the body, particularly in the liver, brain, and other vital organs.
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div id="factpedia" class="section">
+        <div class="container">
+            <h1 class="section-title">FACTPEDIA</h1>
+            <div class="manual-browse">
+                <button onclick="toggleDiseaseList()" class="browse-btn">Browse Diseases</button>
+            </div>
+            <div id="diseaseList" class="disease-browse-list" style="display: none;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+            <div id="diseaseInfo" class="disease-info-display">
+                <!-- Disease info will appear here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="games" class="section">
+        <div class="container">
+            <h1 class="section-title">GAMES</h1>
+            <div class="game-buttons">
+                <button onclick="openGame('game1')" class="btn">Health Warriors: Our Aim is Victory</button>
+                <button onclick="openGame('game2')" class="btn">Health Warriors Z: Total Revenge</button>
+                <button onclick="openGame('game3')" class="btn">Health Warriors Ultimate</button>
+            </div>
+
+            <div id="game1" class="game-container" style="display:none;">
+                <h1 class="game-title">HEALTH WARRIORS: OUR AIM IS VICTORY</h1>
+                <div class="game-status">
+                    <div>
+                        <p>Your HP: <span id="playerHP">100</span>/100</p>
+                        <div class="health-bar">
+                            <div id="playerHealthFill" class="health-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Alien Overlord HP: <span id="enemyHP">100</span>/100</p>
+                        <div class="health-bar">
+                            <div id="enemyHealthFill" class="health-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="game-text" id="gameText">
+                    The evil alien overlord appears before you! Choose your weapon to fight!
+                </div>
+                <div class="game-menu">
+                    <button class="weapon-btn btn-yes" onclick="attack('sword')">Sword (4 DMG)</button>
+                    <button class="weapon-btn btn-yes" onclick="attack('bow')">Bow (3 DMG)</button>
+                    <button class="weapon-btn btn-yes" onclick="attack('cannon')">Cannon (8 DMG)</button>
+                </div>
+            </div>
+
+            <div id="game2" class="game-container" style="display:none;">
+                <h1 class="game-title">HEALTH WARRIORS Z: TOTAL REVENGE</h1>
+                <div class="game-status">
+                    <p>Your HP: <span id="playerHPZ">50</span>/50</p>
+                </div>
+                <canvas id="gameCanvasZ" width="800" height="600"></canvas>
+                <div class="game-text" id="gameTextZ">
+                    Control the green rectangle using arrow keys. Defend yourself against the germ projectiles!
+                </div>
+                <div class="question-display" id="questionDisplayZ">
+                    <p id="gameQuestionZ"></p>
+                    <button class="btn btn-yes" onclick="handleAnswerCorrectZ()">Yes</button>
+                    <button class="btn btn-no" onclick="handleAnswerIncorrectZ()">No</button>
+                </div>
+                <div class="paused-display" id="pausedDisplayZ">
+                    <h2>Paused</h2>
+                    <p>Press '3' to resume.</p>
+                </div>
+            </div>
+
+            <div id="game3" class="game-container" style="display:none;">
+                <h1 class="game-title">HEALTH WARRIORS ULTIMATE</h1>
+                <div class="game-status">
+                    <!-- Additional game status elements -->
+                </div>
+                <!-- Game 3 content goes here -->
+                <div class="game-text">
+                    Coming soon!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="diet-checker" class="section">
+        <div class="container">
+            <h1 class="section-title">DIET CHECKER</h1>
+            <div class="form-group">
+                <label for="weight">Weight (kg):</label>
+                <input type="number" id="weight" min="1" placeholder="Enter your weight in kilograms">
+            </div>
+            <div class="form-group">
+                <label for="height">Height (cm):</label>
+                <input type="number" id="height" min="1" placeholder="Enter your height in centimeters">
+            </div>
+            <div class="form-group">
+                <label for="age">Age:</label>
+                <input type="number" id="age" min="1" placeholder="Enter your age">
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender">
+                    <option value="">Select your gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <button class="btn-submit" onclick="calculateBMI()">Calculate BMI</button>
+
+            <div id="bmi-result">
+                <h3>Your BMI: <span id="bmi-value"></span></h3>
+                <p id="bmi-category"></p>
+            </div>
+
+            <div id="diet-section" style="display: none;">
+                <div class="form-group">
+                    <label for="calories">Total Calorie Intake:</label>
+                    <input type="number" id="calories" min="1" placeholder="Enter your daily calorie intake">
+                </div>
+                <button class="btn-submit" onclick="analyzeDiet()">Submit Diet Plan</button>
+            </div>
+
+            <div id="diet-suggestion">
+                <h3>Diet Suggestion</h3>
+                <p id="suggestion-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div class="question-modal" id="questionModal">
+        <h3 id="questionText"></h3>
+        <div id="answerOptions"></div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Do you have <span id="disease-name"></span>?</h2>
+            <div id="initial-buttons">
+                <button class="btn btn-yes" onclick="startDiagnosisQuestions()">Yes, I want to check</button>
+                <button class="btn btn-no" onclick="closeModal()">No, cancel</button>
+            </div>
+            <div id="questions-container"></div>
+            <div id="result" class="result"></div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Disclaimer: Advice given is purely speculative.</p>
+    </footer>
+
+    <script>
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.querySelector('.loading').style.display = 'none';
+        }, 1500);
+    });
+
+    const diseases = {
+        "covid19": `A highly contagious respiratory illness caused by the SARS-CoV-2 virus. Common symptoms include fever, cough, and fatigue. The virus spreads primarily through respiratory droplets when infected people talk, cough, or sneeze. Prevention includes vaccination, masks, and social distancing. Global impact has led to significant changes in healthcare and daily life.`,
+        "diabetes": `A chronic metabolic disorder characterized by elevated blood glucose levels due to either insufficient insulin production (Type 1) or the body's ineffective use of insulin (Type 2). The condition affects millions globally and its prevalence continues to rise, particularly in developing nations.`,
+        "hypertension": `A condition in which the force of the blood against the artery walls is too high. Often referred to as high blood pressure, it can lead to serious health issues such as heart disease and stroke. Common symptoms may include headaches, shortness of breath, and nosebleeds. Regular monitoring and lifestyle changes are key to management.`,
+        "asthma": `A chronic condition that affects the airways in the lungs, leading to difficulty breathing. Symptoms can include wheezing, coughing, chest tightness, and shortness of breath. Asthma can be triggered by allergens, exercise, and respiratory infections. Management includes avoiding triggers and using inhalers.`,
+        "arthritis": `A complex family of musculoskeletal disorders consisting of more than 100 different conditions that affect people of all ages, races, and genders. The two most common forms are osteoarthritis and rheumatoid arthritis, each with distinct causes and treatments.`,
+        "depression": `A mood disorder that causes a persistent feeling of sadness and loss of interest. Depression can affect how you feel, think, and handle daily activities. Symptoms may include changes in appetite, sleep disturbances, and feelings of worthlessness. Treatment often includes therapy and medication.`,
+        "anxiety": `A mental health disorder characterized by feelings of worry, anxiety, or fear that are strong enough to interfere with daily activities. Symptoms can include restlessness, fatigue, and difficulty concentrating. Treatment options include therapy, medication, and lifestyle changes.`,
+        "migraine": `A type of headache characterized by severe pain, often accompanied by nausea, vomiting, and sensitivity to light and sound. Migraines can last from hours to days and can be debilitating. Management includes medication and lifestyle adjustments to avoid triggers.`,
+        "thyroid": `Conditions that affect the thyroid gland, leading to an imbalance of hormones. Symptoms can include weight changes, fatigue, and mood swings. Common disorders are hypothyroidism and hyperthyroidism. Treatment varies depending on the specific disorder and can include medication or surgery.`,
+        "ibs": `A common disorder affecting the large intestine, characterized by symptoms such as cramping, abdominal pain, bloating, gas, and diarrhea or constipation. The exact cause is unknown, but management includes dietary changes and stress management techniques.`,
+        "multiple-sclerosis": `A complex autoimmune disease that affects the central nervous system (brain and spinal cord) by damaging the protective covering of nerve fibers (myelin sheath). This damage disrupts communication between the brain and the rest of the body, leading to a wide range of physical and cognitive symptoms.`,
+        "parkinsons-disease": `A progressive nervous system disorder affecting movement, characterized by tremors, stiffness, and difficulty with walking, balance, and coordination. The condition develops when nerve cells in the brain that produce dopamine become impaired or die, leading to various motor and non-motor symptoms.`,
+        "lupus": `A chronic autoimmune disease where the body's immune system becomes hyperactive and attacks normal, healthy tissue, causing inflammation and damage to various body systems including joints, skin, kidneys, blood cells, brain, heart, and lungs.`,
+        "celiac-disease": `An autoimmune disorder where the ingestion of gluten leads to damage in the small intestine. When people with celiac disease eat gluten (a protein found in wheat, rye, and barley), their body mounts an immune response that attacks the small intestine, damaging the villi that promote nutrient absorption.`,
+        "crohns-disease": `A type of inflammatory bowel disease (IBD) that causes inflammation of the digestive tract, which can lead to abdominal pain, severe diarrhea, fatigue, weight loss, and malnutrition.`,
+        "fibromyalgia": `A chronic condition characterized by widespread musculoskeletal pain accompanied by fatigue, sleep, memory, and mood issues.`,
+        "endometriosis": `A painful disorder where tissue similar to the tissue that normally lines the inside of the uterus grows outside the uterus, causing severe pain and fertility problems.`,
+        "copd": `A progressive inflammatory lung disease that causes obstructed airflow from the lungs, typically caused by long-term exposure to irritating gases or particulate matter.`,
+        "sleep-apnea": `A potentially serious sleep disorder where breathing repeatedly stops and starts during sleep, significantly impacting quality of life.`,
+        "psoriasis": `A chronic autoimmune condition causing rapid buildup of skin cells, resulting in scaling on the skin's surface. Inflammation and redness around the scales is fairly common, and the scales typically develop into thick, red patches that can crack and bleed.`,
+        "epilepsy": `A central nervous system disorder causing abnormal brain activity leading to seizures or periods of unusual behavior, sensations, and sometimes loss of awareness.`,
+        "chronic-fatigue-syndrome": `A complex disorder characterized by extreme fatigue that can't be explained by any underlying medical condition, with symptoms that may worsen with physical or mental activity.`,
+        "wilsons-disease": `A rare inherited disorder causing excessive copper accumulation in the body, particularly in the liver, brain, and other vital organs.`
+    };
+
+    const diseaseDetails = {
+        "covid19": {
+            symptoms: [
+                "Fever",
+                "Cough",
+                "Fatigue",
+                "Shortness of breath",
+                "Loss of taste or smell"
+            ]
+        },
+        "diabetes": {
+            symptoms: [
+                "Increased thirst",
+                "Frequent urination",
+                "Extreme hunger",
+                "Unexplained weight loss",
+                "Fatigue"
+            ]
+        },
+        "hypertension": {
+            symptoms: [
+                "Headaches",
+                "Shortness of breath",
+                "Nosebleeds",
+                "Flushing",
+                "Dizziness"
+            ]
+        },
+        "asthma": {
+            symptoms: [
+                "Shortness of breath",
+                "Chest tightness",
+                "Wheezing",
+                "Coughing",
+                "Difficulty sleeping"
+            ]
+        },
+        "arthritis": {
+            symptoms: [
+                "Joint pain and stiffness",
+                "Swelling",
+                "Reduced range of motion",
+                "Fatigue",
+                "Tenderness"
+            ]
+        },
+        "depression": {
+            symptoms: [
+                "Persistent sadness",
+                "Loss of interest",
+                "Sleep disturbances",
+                "Changes in appetite",
+                "Difficulty concentrating"
+            ]
+        },
+        "anxiety": {
+            symptoms: [
+                "Restlessness",
+                "Fatigue",
+                "Difficulty concentrating",
+                "Irritability",
+                "Sleep disturbances"
+            ]
+        },
+        "migraine": {
+            symptoms: [
+                "Severe headache",
+                "Nausea",
+                "Vomiting",
+                "Sensitivity to light and sound",
+                "Aura"
+            ]
+        },
+        "thyroid": {
+            symptoms: [
+                "Weight changes",
+                "Fatigue",
+                "Mood swings",
+                "Sensitivity to temperature",
+                "Changes in heart rate"
+            ]
+        },
+        "ibs": {
+            symptoms: [
+                "Abdominal pain",
+                "Cramping",
+                "Bloating",
+                "Gas",
+                "Diarrhea or constipation"
+            ]
+        },
+        "multiple-sclerosis": {
+            symptoms: [
+                "Fatigue",
+                "Vision problems",
+                "Numbness and tingling",
+                "Muscle spasms",
+                "Balance problems",
+                "Difficulty walking",
+                "Cognitive changes"
+            ]
+        },
+        "parkinsons-disease": {
+            symptoms: [
+                "Tremor in hands, arms, legs, jaw or head",
+                "Muscle stiffness",
+                "Slowed movement (bradykinesia)",
+                "Impaired balance",
+                "Speech changes",
+                "Writing changes"
+            ]
+        },
+        "lupus": {
+            symptoms: [
+                "Fatigue",
+                "Joint pain",
+                "Skin rashes",
+                "Sensitivity to sunlight",
+                "Fever"
+            ]
+        },
+        "celiac-disease": {
+            symptoms: [
+                "Digestive problems",
+                "Fatigue",
+                "Weight loss",
+                "Bloating",
+                "Anemia"
+            ]
+        },
+        "crohns-disease": {
+            symptoms: [
+                "Abdominal pain",
+                "Severe diarrhea",
+                "Fatigue",
+                "Weight loss",
+                "Malnutrition"
+            ]
+        },
+        "fibromyalgia": {
+            symptoms: [
+                "Widespread musculoskeletal pain",
+                "Fatigue",
+                "Sleep issues",
+                "Memory problems",
+                "Mood issues"
+            ]
+        },
+        "endometriosis": {
+            symptoms: [
+                "Pelvic pain",
+                "Menstrual irregularities",
+                "Pain during intercourse",
+                "Fatigue",
+                "Gastrointestinal issues"
+            ]
+        },
+        "copd": {
+            symptoms: [
+                "Breathing difficulty",
+                "Chronic cough",
+                "Mucus production",
+                "Wheezing",
+                "Fatigue"
+            ]
+        },
+        "sleep-apnea": {
+            symptoms: [
+                "Loud snoring",
+                "Gasping for air during sleep",
+                "Waking with dry mouth",
+                "Morning headache",
+                "Excessive daytime sleepiness"
+            ]
+        },
+        "psoriasis": {
+            symptoms: [
+                "Red patches of skin covered with thick, silvery scales",
+                "Dry, cracked skin",
+                "Itching or burning",
+                "Thickened, pitted, or ridged nails",
+                "Sore joints"
+            ]
+        },
+        "epilepsy": {
+            symptoms: [
+                "Seizures",
+                "Loss of awareness during seizures",
+                "Confusion after seizures",
+                "Auras",
+                "Uncontrollable jerking movements"
+            ]
+        },
+        "chronic-fatigue-syndrome": {
+            symptoms: [
+                "Extreme fatigue",
+                "Unrefreshing sleep",
+                "Memory issues",
+                "Dizziness",
+                "Muscle or joint pain"
+            ]
+        },
+        "wilsons-disease": {
+            symptoms: [
+                "Liver problems",
+                "Neurological symptoms",
+                "Psychiatric symptoms",
+                "Fatigue",
+                "Yellowing of the skin and eyes"
+            ]
+        }
+    };
+
+    let currentDisease = '';
+    let currentQuestion = 0;
+    let yesAnswers = 0;
+
+    const diseaseQuestions = {
+        covid19: [
+            "Do you have a fever?",
+            "Do you have a dry cough?",
+            "Have you lost your sense of taste or smell?",
+            "Are you experiencing fatigue?",
+            "Do you have difficulty breathing?"
+        ],
+        diabetes: [
+            "Are you experiencing increased thirst?",
+            "Do you urinate frequently?",
+            "Have you noticed unexplained weight loss?",
+            "Do you feel very hungry?",
+            "Do you feel very tired?"
+        ],
+        hypertension: [
+            "Do you have frequent headaches?",
+            "Have you experienced irregular heartbeat?",
+            "Do you have vision problems?",
+            "Do you feel shortness of breath?",
+            "Do you have nosebleeds?"
+        ],
+        asthma: [
+            "Do you have difficulty breathing?",
+            "Do you experience wheezing?",
+            "Do you often cough?",
+            "Do you feel chest tightness?",
+            "Have you noticed symptoms worsening at night?"
+        ],
+        arthritis: [
+            "Do you have joint pain?",
+            "Is there swelling in your joints?",
+            "Do you experience stiffness after sitting for a long time?",
+            "Is there redness around your joints?",
+            "Do you have difficulty moving your joints?"
+        ],
+        depression: [
+            "Do you often feel sad or hopeless?",
+            "Have you lost interest in activities you once enjoyed?",
+            "Do you have trouble sleeping or sleep too much?",
+            "Have you experienced changes in appetite?",
+            "Do you often feel fatigued or lack energy?"
+        ],
+        anxiety: [
+            "Do you often feel restless or on edge?",
+            "Do you find it hard to relax?",
+            "Have you been feeling easily fatigued?",
+            "Do you have difficulty concentrating?",
+            "Do you experience muscle tension?"
+        ],
+        migraine: [
+            "Do you often experience severe headaches?",
+            "Do you experience nausea or vomiting during headaches?",
+            "Do you have sensitivity to light or sound?",
+            "Do your headaches last between 4 and 72 hours?",
+            "Do you experience headaches accompanied by visual disturbances?"
+        ],
+        thyroid: [
+            "Have you noticed significant changes in weight?",
+            "Do you feel unusually tired?",
+            "Do you have mood swings?",
+            "Have you experienced changes in your heart rate?",
+            "Do you feel cold when others are comfortable?"
+        ],
+        ibs: [
+            "Do you experience abdominal pain?",
+            "Have you noticed changes in your bowel habits?",
+            "Do you experience bloating after meals?",
+            "Do you often feel gassy?",
+            "Do you have cramping that can be relieved by passing gas or a bowel movement?"
+        ],
+        "multiple-sclerosis": [
+            "Do you experience fatigue that interferes with daily activities?",
+            "Have you noticed vision problems?",
+            "Do you have numbness or tingling?",
+            "Do you experience muscle spasms or stiffness?",
+            "Have you experienced difficulty walking?"
+        ],
+        "parkinsons-disease": [
+            "Do you have tremors in your hands or arms?",
+            "Is there stiffness in your muscles?",
+            "Do you experience slowed movement?",
+            "Have you noticed changes in your balance?",
+            "Do you have difficulty writing?"
+        ],
+        lupus: [
+            "Do you experience extreme fatigue?",
+            "Have you noticed joint pain?",
+            "Do you have skin rashes?",
+            "Are you sensitive to sunlight?",
+            "Do you experience fever?"
+        ],
+        "celiac-disease": [
+            "Do you experience digestive problems after eating gluten?",
+            "Have you noticed fatigue or weight loss?",
+            "Do you have bloating or gas?",
+            "Have you been diagnosed with anemia?",
+            "Do you have symptoms that improve on a gluten-free diet?"
+        ],
+        "crohns-disease": [
+            "Do you have abdominal pain?",
+            "Have you experienced severe diarrhea?",
+            "Do you feel fatigued or weak?",
+            "Have you noticed weight loss?",
+            "Do you experience malnutrition?"
+        ],
+        fibromyalgia: [
+            "Do you have widespread pain?",
+            "Is there fatigue that interferes with daily activities?",
+            "Do you have trouble sleeping?",
+            "Have you noticed memory issues?",
+            "Do you experience mood changes?"
+        ],
+        endometriosis: [
+            "Do you experience pelvic pain?",
+            "Are your menstrual periods painful?",
+            "Do you have pain during intercourse?",
+            "Have you experienced fatigue?",
+            "Do you have gastrointestinal issues?"
+        ],
+        copd: [
+            "Do you have difficulty breathing?",
+            "Is there a chronic cough?",
+            "Do you produce mucus?",
+            "Do you experience wheezing?",
+            "Have you noticed fatigue?"
+        ],
+        "sleep-apnea": [
+            "Do you snore loudly?",
+            "Do you gasp for air during sleep?",
+            "Do you wake up with dry mouth?",
+            "Have you experienced morning headaches?",
+            "Do you feel excessively sleepy during the day?"
+        ],
+        epilepsy: [
+            "Have you experienced seizures?",
+            "Do you have loss of awareness during seizures?",
+            "Do you experience confusion after seizures?",
+            "Do you have unusual sensations before seizures?",
+            "Do you experience uncontrollable jerking movements?"
+        ],
+        "chronic-fatigue-syndrome": [
+            "Do you experience extreme fatigue?",
+            "Is your sleep unrefreshing?",
+            "Do you have memory issues?",
+            "Do you experience dizziness?",
+            "Do you have muscle or joint pain?"
+        ],
+        "wilsons-disease": [
+            "Have you noticed liver-related symptoms?",
+            "Do you have neurological symptoms?",
+            "Are there psychiatric symptoms?",
+            "Do you experience fatigue?",
+            "Have you noticed yellowing of the skin and eyes?"
+        ]
+    };
+
+    // Event listeners for disease items
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.disease-item').forEach(item => {
+            item.addEventListener('click', () => {
+                currentDisease = item.getAttribute('data-disease');
+                openModal(currentDisease);
+            });
+        });
+
+        // Modal functions for Diagnosis
+        window.openModal = function(disease) {
+            document.getElementById('modal').style.display = 'block';
+            const diseaseTitle = document.querySelector(`.disease-item[data-disease="${disease}"] .disease-title`).textContent;
+            document.getElementById('disease-name').textContent = diseaseTitle;
+            document.getElementById('initial-buttons').style.display = 'block';
+            document.getElementById('questions-container').style.display = 'none';
+            document.getElementById('result').style.display = 'none';
+            currentQuestion = 0;
+            yesAnswers = 0;
+        }
+
+        window.closeModal = function() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        // Close modal when clicking on X
+        document.querySelector('.close').addEventListener('click', closeModal);
+
+        window.startDiagnosisQuestions = function() {
+            document.getElementById('initial-buttons').style.display = 'none';
+            document.getElementById('questions-container').style.display = 'block';
+            showDiagnosisQuestion();
+        }
+
+        window.showDiagnosisQuestion = function() {
+            const questions = diseaseQuestions[currentDisease];
+            if (currentQuestion < questions.length) {
+                const questionsContainer = document.getElementById('questions-container');
+                questionsContainer.innerHTML = `
+                    <div class="question">
+                        <p>${questions[currentQuestion]}</p>
+                        <button class="btn btn-yes" onclick="answerDiagnosisQuestion(true)">Yes</button>
+                        <button class="btn btn-no" onclick="answerDiagnosisQuestion(false)">No</button>
+                    </div>
+                `;
+            } else {
+                showDiagnosisResult();
+            }
+        }
+
+        window.answerDiagnosisQuestion = function(isYes) {
+            if (isYes) yesAnswers++;
+            currentQuestion++;
+            showDiagnosisQuestion();
+        }
+
+        window.showDiagnosisResult = function() {
+            const questions = diseaseQuestions[currentDisease];
+            const percentage = (yesAnswers / questions.length) * 100;
+            const result = document.getElementById('result');
+
+            let message;
+            if (percentage >= 60) {
+                message = `Based on your symptoms, there is a high likelihood (${percentage.toFixed(1)}%) that you may have ${document.querySelector(`.disease-item[data-disease="${currentDisease}"] .disease-title`).textContent}. Please consult a healthcare professional for proper diagnosis and treatment.`;
+            } else {
+                message = `Based on your symptoms, it's less likely (${percentage.toFixed(1)}%) that you have ${document.querySelector(`.disease-item[data-disease="${currentDisease}"] .disease-title`).textContent}. However, if you're concerned, please consult a healthcare professional.`;
+            }
+
+            result.innerHTML = `
+                <h3>Result</h3>
+                <p>${message}</p>
+                <button class="btn btn-yes" onclick="closeModal()">Close</button>
+            `;
+
+            document.getElementById('questions-container').style.display = 'none';
+            result.style.display = 'block';
+        }
+
+        window.toggleDiseaseList = function() {
+            const diseaseList = document.getElementById('diseaseList');
+            if (diseaseList.style.display === 'none') {
+                // Populate and show the list
+                let listHTML = '';
+                for (let disease in diseases) {
+                    // Capitalize the first letter and replace hyphens with spaces for display
+                    const displayName = disease.replace(/-/g, ' ').replace(/\b\w/g, char => char.toUpperCase());
+                    listHTML += `<div class="disease-item-browse" onclick="showDiseaseInfo('${disease}')">${displayName}</div>`;
+                }
+                diseaseList.innerHTML = listHTML;
+                diseaseList.style.display = 'block';
+            } else {
+                diseaseList.style.display = 'none';
+            }
+        }
+
+        window.showDiseaseInfo = function(diseaseName) {
+            const diseaseInfo = document.getElementById('diseaseInfo');
+            const description = diseases[diseaseName] || "Information not available";
+            const details = diseaseDetails[diseaseName] || {
+                symptoms: ["Information being updated"]
+            };
+
+            diseaseInfo.innerHTML = `
+                <h2>${document.querySelector(`.disease-item[data-disease="${diseaseName}"] .disease-title`).textContent}</h2>
+                <div class="disease-full-description">
+                    ${description}
+                </div>
+                <div class="symptoms-section">
+                    <h3>Common Symptoms</h3>
+                    <ul>
+                        ${details.symptoms.map(symptom => `<li>${symptom}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+
+            diseaseInfo.style.display = 'block';
+        }
+    });
+
+    // Game 1 - HEALTH WARRIORS: OUR AIM IS VICTORY Game Logic
+    const healthQuestions = [
+        {
+            question: "What is the life expectancy in India?",
+            options: ["69 years", "72 years", "75 years", "78 years"],
+            correct: "69 years"
+        },
+        {
+            question: "Which state in India has the highest healthcare index?",
+            options: ["Kerala", "Tamil Nadu", "Maharashtra", "Gujarat"],
+            correct: "Kerala"
+        },
+        {
+            question: "What percentage of India's GDP is spent on healthcare?",
+            options: ["1.8%", "2.1%", "3.6%", "4.2%"],
+            correct: "1.8%"
+        },
+        // Add more questions here...
+    ];
+
+    let playerHealth = 100;
+    let enemyHealth = 100;
+    let isGameOver = false;
+
+    function attack(weapon) {
+        if (isGameOver) return;
+
+        const question = healthQuestions[Math.floor(Math.random() * healthQuestions.length)];
+        showGameQuestion(question, weapon);
+    }
+
+    function showGameQuestion(question, weapon) {
+        const modal = document.getElementById('questionModal');
+        const overlay = document.getElementById('overlay');
+        const questionText = document.getElementById('questionText');
+        const answerOptions = document.getElementById('answerOptions');
+
+        questionText.textContent = question.question;
+        answerOptions.innerHTML = '';
+
+        question.options.forEach(option => {
+            const button = document.createElement('button');
+            button.textContent = option;
+            button.className = 'btn btn-yes';
+            button.onclick = () => handleGameAnswer(option === question.correct, weapon);
+            answerOptions.appendChild(button);
+        });
+
+        modal.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    function handleGameAnswer(isCorrect, weapon) {
+        const modal = document.getElementById('questionModal');
+        const overlay = document.getElementById('overlay');
+
+        modal.style.display = 'none';
+        overlay.style.display = 'none';
+
+        const gameText = document.getElementById('gameText');
+
+        if (isCorrect) {
+            const damage = weapon === 'sword' ? 4 : weapon === 'bow' ? 3 : 8;
+            enemyHealth = Math.max(0, enemyHealth - damage);
+            gameText.textContent = "Your attack hits! The alien overlord takes " + damage + " damage!";
+        } else {
+            gameText.textContent = "Your attack misses! The alien overlord laughs at your attempt!";
+        }
+
+        updateHealthBars();
+
+        if (enemyHealth > 0) {
+            // Enemy turn
+            setTimeout(() => {
+                const enemyDamage = Math.floor(Math.random() * 5) + 3;
+                playerHealth = Math.max(0, playerHealth - enemyDamage);
+                gameText.textContent += "\nThe alien overlord attacks you for " + enemyDamage + " damage!";
+                updateHealthBars();
+                checkGameOver();
+            }, 1000);
+        } else {
+            endGame(true);
+        }
+    }
+
+    function updateHealthBars() {
+        const playerHealthFill = document.getElementById('playerHealthFill');
+        const enemyHealthFill = document.getElementById('enemyHealthFill');
+
+        document.getElementById('playerHP').textContent = playerHealth;
+        document.getElementById('enemyHP').textContent = enemyHealth;
+
+        playerHealthFill.style.width = playerHealth + '%';
+        enemyHealthFill.style.width = enemyHealth + '%';
+
+        if (playerHealth <= 30) {
+            playerHealthFill.classList.add('low');
+        } else {
+            playerHealthFill.classList.remove('low');
+        }
+
+        if (enemyHealth <= 30) {
+            enemyHealthFill.classList.add('low');
+        } else {
+            enemyHealthFill.classList.remove('low');
+        }
+    }
+
+    function checkGameOver() {
+        if (playerHealth <= 0) {
+            endGame(false);
+        }
+    }
+
+    function endGame(playerWon) {
+        isGameOver = true;
+        const gameText = document.getElementById('gameText');
+        if (playerWon) {
+            gameText.textContent = "Victory! You have defeated the alien overlord and saved Earth's healthcare system!";
+        } else {
+            gameText.textContent = "Game Over! The alien overlord has defeated you. Try again with better health knowledge!";
+        }
+    }
+
+    // Navigation handling
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+
+                // Remove active class from all links
+                document.querySelectorAll('.nav-link').forEach(l => {
+                    l.classList.remove('active');
+                });
+
+                // Add active class to clicked link
+                e.target.classList.add('active');
+
+                // Hide all sections
+                document.querySelectorAll('.section').forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                // Show selected section
+                const sectionId = e.target.getAttribute('data-section');
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+    });
+
+    // HEALTH WARRIORS Z: TOTAL REVENGE Game Logic
+    (function() {
+        const canvas = document.getElementById('gameCanvasZ');
+        const ctx = canvas.getContext('2d');
+        const gameTextZ = document.getElementById('gameTextZ');
+        const playerHPZElement = document.getElementById('playerHPZ');
+        const questionDisplayZ = document.getElementById('questionDisplayZ');
+        const gameQuestionZ = document.getElementById('gameQuestionZ');
+        const pausedDisplayZ = document.getElementById('pausedDisplayZ');
+
+        const playerZ = {
+            x: canvas.width / 2 - 20,
+            y: canvas.height / 2 - 20,
+            width: 40,
+            height: 40,
+            color: 'green',
+            speed: 5,
+            hp: 50,
+            bullets: [],
+            canShoot: false,
+            shootTimeout: null
+        };
+
+        const turretsZ = [];
+        const projectilesZ = [];
+        const germsDestroyed = { count: 0 };
+
+        const keysZ = {};
+
+        let pausedZ = true; // Paused by default
+
+        // Initialize turrets at random positions
+        function initTurrets() {
+            for (let i = 0; i < 5; i++) {
+                turretsZ.push({
+                    x: Math.random() * (canvas.width - 40),
+                    y: Math.random() * (canvas.height - 40),
+                    width: 30,
+                    height: 30,
+                    color: 'red',
+                    lastShot: Date.now()
+                });
+            }
+        }
+
+        // Handle key presses
+        window.addEventListener('keydown', (e) => {
+            keysZ[e.key] = true;
+            // Handle shooting bullets
+            if (playerZ.canShoot && e.key === ' ') {
+                playerZ.bullets.push({ x: playerZ.x + playerZ.width / 2, y: playerZ.y });
+            }
+            // Handle asking questions
+            if (e.key === 'E' || e.key === 'e') {
+                askQuestionZ();
+            }
+            // Handle pausing the game with '3' key
+            if (e.key === '3') {
+                togglePauseGameZ();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keysZ[e.key] = false;
+        });
+
+        // Game Loop
+        function gameLoopZWithPause() {
+            if (!pausedZ) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                movePlayerZ();
+                drawPlayerZ();
+                drawTurretsZ();
+                moveProjectilesZ();
+                drawProjectilesZ();
+                moveBulletsZ();
+                drawBulletsZ();
+                checkCollisionsZ();
+            }
+            requestAnimationFrame(gameLoopZWithPause);
+        }
+
+        function movePlayerZ() {
+            if (keysZ['ArrowUp'] && playerZ.y > 0) {
+                playerZ.y -= playerZ.speed;
+            }
+            if (keysZ['ArrowDown'] && playerZ.y + playerZ.height < canvas.height) {
+                playerZ.y += playerZ.speed;
+            }
+            if (keysZ['ArrowLeft'] && playerZ.x > 0) {
+                playerZ.x -= playerZ.speed;
+            }
+            if (keysZ['ArrowRight'] && playerZ.x + playerZ.width < canvas.width) {
+                playerZ.x += playerZ.speed;
+            }
+        }
+
+        function drawPlayerZ() {
+            ctx.fillStyle = playerZ.color;
+            ctx.fillRect(playerZ.x, playerZ.y, playerZ.width, playerZ.height);
+        }
+
+        function drawTurretsZ() {
+            turretsZ.forEach(turret => {
+                ctx.fillStyle = turret.color;
+                ctx.fillRect(turret.x, turret.y, turret.width, turret.height);
+                // Fire projectiles at intervals
+                if (Date.now() - turret.lastShot > 2000) {
+                    fireProjectileZ(turret);
+                    turret.lastShot = Date.now();
+                }
+            });
+        }
+
+        function fireProjectileZ(turret) {
+            // Calculate direction towards player
+            const dx = (playerZ.x + playerZ.width / 2) - (turret.x + turret.width / 2);
+            const dy = (playerZ.y + playerZ.height / 2) - (turret.y + turret.height / 2);
+            const angle = Math.atan2(dy, dx);
+            const speed = 3;
+            projectilesZ.push({
+                x: turret.x + turret.width / 2,
+                y: turret.y + turret.height / 2,
+                radius: 5,
+                color: 'grey',
+                velocity: {
+                    x: Math.cos(angle) * speed,
+                    y: Math.sin(angle) * speed
+                }
+            });
+        }
+
+        function moveProjectilesZ() {
+            projectilesZ.forEach((proj, index) => {
+                proj.x += proj.velocity.x;
+                proj.y += proj.velocity.y;
+                // Remove projectiles that go off-screen
+                if (proj.x < 0 || proj.x > canvas.width || proj.y < 0 || proj.y > canvas.height) {
+                    projectilesZ.splice(index, 1);
+                }
+            });
+        }
+
+        function drawProjectilesZ() {
+            projectilesZ.forEach(proj => {
+                ctx.beginPath();
+                ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+                ctx.fillStyle = proj.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        // Bullets fired by player
+        function moveBulletsZ() {
+            playerZ.bullets.forEach((bullet, index) => {
+                bullet.y -= 7;
+                if (bullet.y < 0) {
+                    playerZ.bullets.splice(index, 1);
+                }
+            });
+        }
+
+        function drawBulletsZ() {
+            playerZ.bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'black';
+                ctx.fill();
+                ctx.closePath();
+            });
+        }
+
+        function checkCollisionsZ() {
+            // Check collision between projectiles and player
+            projectilesZ.forEach((proj, pIndex) => {
+                if (proj.x > playerZ.x && proj.x < playerZ.x + playerZ.width &&
+                    proj.y > playerZ.y && proj.y < playerZ.y + playerZ.height) {
+                    // Collision detected
+                    playerZ.hp -= 1;
+                    playerHPZElement.textContent = playerZ.hp;
+                    projectilesZ.splice(pIndex, 1);
+                    if (playerZ.hp <= 0) {
+                        endGameZ(false);
+                    }
+                }
+            });
+
+            // Check collision between bullets and projectiles
+            playerZ.bullets.forEach((bullet, bIndex) => {
+                projectilesZ.forEach((proj, pIndex) => {
+                    const dist = Math.hypot(bullet.x - proj.x, bullet.y - proj.y);
+                    if (dist < 5 + 3) { // projectile radius + bullet radius
+                        projectilesZ.splice(pIndex, 1);
+                        playerZ.bullets.splice(bIndex, 1);
+                        germsDestroyed.count++;
+                        gameTextZ.textContent = `Germs destroyed: ${germsDestroyed.count}/50`;
+                        if (germsDestroyed.count >= 50) {
+                            endGameZ(true);
+                        }
+                    }
+                });
+            });
+        }
+
+        function endGameZ(playerWon) {
+            // Stop the game loop by not requesting further frames
+            if (playerWon) {
+                gameTextZ.textContent = "Congratulations! You have destroyed 50 germs and won the game!";
+            } else {
+                gameTextZ.textContent = "Game Over! Your health has reached zero.";
+            }
+        }
+
+        function askQuestionZ() {
+            if (pausedZ) return;
+            // Pause the game loop
+            pauseGameZ();
+            // Show question display
+            const question = healthQuestions[Math.floor(Math.random() * healthQuestions.length)];
+            displayQuestionZ(question);
+        }
+
+        function displayQuestionZ(question) {
+            gameQuestionZ.textContent = question.question;
+            // Clear existing buttons
+            const existingButtons = questionDisplayZ.querySelectorAll('button');
+            existingButtons.forEach(button => button.remove());
+
+            // Create new buttons
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.className = 'btn btn-yes';
+                button.onclick = () => handleAnswerGameZ(option === question.correct, question.correct);
+                questionDisplayZ.appendChild(button);
+            });
+
+            questionDisplayZ.style.display = 'block';
+        }
+
+        function handleAnswerGameZ(isCorrect, correctAnswer) {
+            questionDisplayZ.style.display = 'none';
+            if (isCorrect) {
+                playerZ.canShoot = true;
+                gameTextZ.textContent = "Correct! You can fire bullets for the next 5 seconds.";
+                // Allow shooting for 5 seconds
+                playerZ.shootTimeout = setTimeout(() => {
+                    playerZ.canShoot = false;
+                    gameTextZ.textContent = "Shooting period ended.";
+                }, 5000);
+            } else {
+                gameTextZ.textContent = `Incorrect! The correct answer was "${correctAnswer}". You cannot shoot bullets.`;
+            }
+            // Resume the game
+            resumeGameZ();
+        }
+
+        function togglePauseGameZ() {
+            pausedZ = !pausedZ;
+            if (pausedZ) {
+                pausedDisplayZ.style.display = 'block';
+                gameTextZ.textContent = "Game Paused. Press '3' to resume.";
+            } else {
+                pausedDisplayZ.style.display = 'none';
+                gameTextZ.textContent = "Game Resumed.";
+            }
+        }
+
+        function pauseGameZ() {
+            pausedZ = true;
+            pausedDisplayZ.style.display = 'block';
+        }
+
+        function resumeGameZ() {
+            pausedZ = false;
+            pausedDisplayZ.style.display = 'none';
+        }
+
+        initTurrets();
+        gameLoopZWithPause();
+
+        window.openGame = function(gameId) {
+            // Hide all game containers
+            document.querySelectorAll('.game-container').forEach(game => {
+                game.style.display = 'none';
+            });
+
+            // Show the selected game container
+            document.getElementById(gameId).style.display = 'block';
+
+            if (gameId === 'game2') {
+                // Ensure the second game is paused by default
+                pauseGameZ();
+            } else if (gameId === 'game3') {
+                // Initialize or reset game3 if needed
+                // Currently, it's a placeholder
+            } else {
+                // Reset game1 if reopened
+                if (gameId === 'game1') {
+                    playerHealth = 100;
+                    enemyHealth = 100;
+                    isGameOver = false;
+                    updateHealthBars();
+                    document.getElementById('gameText').textContent = "The evil alien overlord appears before you! Choose your weapon to fight!";
+                }
+            }
+        }
+    })();
+
+    // Diet Checker Logic
+    function calculateBMI() {
+        const weight = parseFloat(document.getElementById('weight').value);
+        const heightCm = parseFloat(document.getElementById('height').value);
+        const age = parseInt(document.getElementById('age').value);
+        const gender = document.getElementById('gender').value;
+
+        if (isNaN(weight) || isNaN(heightCm) || isNaN(age) || gender === "") {
+            alert("Please fill in all fields correctly.");
+            return;
+        }
+
+        const heightM = heightCm / 100;
+        const bmi = weight / (heightM * heightM);
+        const bmiValue = bmi.toFixed(1);
+        let category = "";
+
+        if (bmi < 18.5) {
+            category = "Underweight";
+        } else if (bmi >= 18.5 && bmi < 24.9) {
+            category = "Normal weight";
+        } else if (bmi >= 25 && bmi < 29.9) {
+            category = "Overweight";
+        } else {
+            category = "Obese";
+        }
+
+        document.getElementById('bmi-value').textContent = bmiValue;
+        document.getElementById('bmi-category').textContent = `You are classified as ${category}.`;
+        document.getElementById('bmi-result').style.display = 'block';
+        document.getElementById('diet-section').style.display = 'block';
+    }
+
+    function analyzeDiet() {
+        const calories = parseFloat(document.getElementById('calories').value);
+        const bmi = parseFloat(document.getElementById('bmi-value').textContent);
+        const category = document.getElementById('bmi-category').textContent;
+
+        if (isNaN(calories)) {
+            alert("Please enter your total calorie intake.");
+            return;
+        }
+
+        let suggestion = "";
+
+        // Simple calorie suggestions based on BMI category
+        if (category.includes("Underweight")) {
+            if (calories < 2500) {
+                suggestion = "Your calorie intake is slightly below the recommended level for your BMI. Consider increasing your daily calories with nutritious foods to achieve a healthy weight.";
+            } else {
+                suggestion = "Your calorie intake is adequate for your BMI. Continue maintaining a balanced diet to support your health.";
+            }
+        } else if (category.includes("Normal weight")) {
+            if (calories < 2000) {
+                suggestion = "Your calorie intake is a bit low for maintaining your current weight. Ensure you consume enough calories to sustain your healthy BMI.";
+            } else if (calories > 2500) {
+                suggestion = "Your calorie intake is above the recommended level for your BMI. Consider moderating your calorie consumption to maintain your healthy weight.";
+            } else {
+                suggestion = "Your calorie intake is well-balanced for your BMI. Keep up the good work in maintaining a healthy diet.";
+            }
+        } else if (category.includes("Overweight")) {
+            if (calories > 2500) {
+                suggestion = "Your calorie intake is high for your BMI. Reducing your daily calories through a balanced diet can help you achieve a healthier weight.";
+            } else if (calories < 2000) {
+                suggestion = "Your calorie intake is below the recommended level. Ensure you get enough nutrients while managing your calorie consumption for a balanced diet.";
+            } else {
+                suggestion = "Your calorie intake is moderate. Consider adjusting your diet to further improve your BMI and overall health.";
+            }
+        } else if (category.includes("Obese")) {
+            if (calories > 2000) {
+                suggestion = "Your calorie intake is high for your BMI. Implementing a calorie-restricted diet combined with regular physical activity can help in reducing weight and improving health.";
+            } else {
+                suggestion = "Your calorie intake is within a reasonable range. Continue with your healthy eating habits and consider consulting a nutritionist for personalized advice.";
+            }
+        }
+
+        document.getElementById('suggestion-text').textContent = suggestion;
+        document.getElementById('diet-suggestion').style.display = 'block';
+    }
+    </script>
+
+</body>   
+</html>
